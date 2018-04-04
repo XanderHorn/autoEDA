@@ -6,7 +6,7 @@
 
 ## Use
 
-Please refer to the help files for each package.
+Please refer to the help files for each function.
 
 ## Installation
 `install.packages('devtools')`
