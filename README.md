@@ -6,7 +6,9 @@
 
 ## Use
 `install.packages('devtools')`
+
 `library(devtools)`
+
 `devtools::install_github("XanderHorn/autoEDA")`
 
 `library(autoEDA)`
