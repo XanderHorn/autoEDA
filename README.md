@@ -4,6 +4,23 @@
 
 `autoEDA` aims to automate exploratory data analysis in a univariate or bivariate manner. It has the ability to output plots created with the `ggplot2` library and themes inspired by `RColorBrewer`. The main ability involves seemlessly cleaning and pre-processing your data inorder for plots to display adequately.
 
+## Installation
+`install.packages('devtools')`
+
+`library(devtools)`
+
+`devtools::install_github("XanderHorn/autoEDA")`
+
+`library(autoEDA)`
+
+## Use
+
+Please refer to the help files for each function.
+
+## Examples
+
+Below are some examples of plots produced.
+
 ### Continuous outcome (Regression problems)
 
 Example plots for a regression problem.
@@ -37,15 +54,3 @@ Available color themes.
 
 ![themes](https://user-images.githubusercontent.com/13403428/38306099-b0e2324a-380f-11e8-8753-b98523af115e.PNG)
 
-## Use
-
-Please refer to the help files for each function.
-
-## Installation
-`install.packages('devtools')`
-
-`library(devtools)`
-
-`devtools::install_github("XanderHorn/autoEDA")`
-
-`library(autoEDA)`
