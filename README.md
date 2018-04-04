@@ -12,6 +12,20 @@ Example plots for a regression problem.
 
 ### Categorical outcome (Classification problems)
 
+Example plots for a classification problem.
+
+![classification](https://user-images.githubusercontent.com/13403428/38305997-4e389af8-380f-11e8-9b22-8e09e65abeb4.PNG)
+
+### Univariate analysis
+
+### Plot types
+
+Categorical plot types:
+
+Continuous plot types:
+
+### Themes
+
 ## Use
 
 Please refer to the help files for each function.
