@@ -1,0 +1,15 @@
+Package: autoEDA
+Type: Package
+Title: Automated univariate and bivariate exploratory data analysis
+Version: 1.0
+Author: Xander Horn <xanderhorn@hotmail.com>
+Maintainer: Xander Horn <xanderhorn@hotmail.com>
+Description: Automated exploratory data analysis for modelling problems, variables of interest and data of interest. 
+    Exploratory data analysis can be performed both visually and in a tabular manner. 
+    In addition allows for exploring variable predictive power when encountering a modelling problem.
+License: MIT
+Encoding: UTF-8
+LazyData: true
+Imports: 
+  ggplot2,RColorBrewer
+RoxygenNote: 6.0.1
