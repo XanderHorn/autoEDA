@@ -926,7 +926,6 @@ if (is.null(outputPath) == FALSE){
     return(overview)
   } else {
     rm(list = setdiff(ls(),c("overview","plots","colors","color")))
-
     invisible(gc())
     return(list(overview = overview, plots = plots))
   }
