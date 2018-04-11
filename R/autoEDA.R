@@ -29,8 +29,9 @@
 #' @param transparency [numeric | Optional] Specifies the color transparency for plots. Lower values means more transparency and higher values means no transparency. Defaults to 1.
 #' @param outputPath [character | Optional] The destination path where the output plots will be contained in a PDF file format. Should the path be left as NULL, all plotting will occur in R, else a valid path should be provided to create a PDF document containing all plots. Defaults to NULL.
 #' @param filename [character | Optional] The filename of the PDF file that will consists of the plots should the output path be specified. Defaults to ExploratoryPlots.
+#' @param returnPlotList [logical | Optional] Should plots generated be returned as a list 
 #' @param verbose [logical | Optional] Should the function be chatty and provide feedback or not. Defaults to TRUE.
-#' @return Object of type data.frame containing exploratory information and if specified predictive power per feature. Output is the same as the output generated from dataOverview.
+#' @return Object of type data.frame containing exploratory information and if specified predictive power per feature. Output is the same as the output generated from dataOverview. Output will change to object of type list when argument 'returnPlotList' is TRUE.
 #' @export
 #' @examples
 #' # Bivariate classification example:
@@ -74,6 +75,7 @@ autoEDA <- function(x,
           transparency = 1,
           outputPath = NULL,
           filename = "ExploratoryPlots",
+          returnPlotList = FALSE,
           verbose = TRUE){
 
 # LIBRARIES
@@ -788,7 +790,9 @@ if(color == "#26A69A" & outcomeType != "none"){
 #CALCULATE PREDICTIVE POWER OF FEATURES
 options(warn = -1)
 if(predictivePower == TRUE & is.null(y) == FALSE){
-  cat("autoEDA | Calculating feature predictive power \n")
+  if(verbose == TRUE){
+    cat("autoEDA | Calculating feature predictive power \n")
+  }
   pp <- predictivePower(x = x,
                         y = y,
                         outcomeType = outcomeType)
@@ -890,12 +894,17 @@ if(outcomeType == "none"){
   }
 }
 
+names(plots) <- names(x)
+
 # ADD OVERVIEW PLOTS TO PLOT LIST BEFORE PLOTTING
 if(predictivePower == TRUE & is.null(y) == FALSE){
   plots[[length(plots) + 1]] <- pp_plot
+  names(plots)[[length(plots)]] <- "PredictivePower"
 }
 
-invisible(lapply(plots,function(x) plot(x,main="some plot")))
+if(returnPlotList == FALSE){
+  invisible(lapply(plots,function(x) plot(x,main="some plot")))
+}
 
 for(i in 1:ncol(overview)){
   if(class(overview[,i]) %in% c("integer","numeric")){
@@ -911,7 +920,14 @@ if (is.null(outputPath) == FALSE){
   }
 }
 
-  rm(list = setdiff(ls(),c("overview")))
-  invisible(gc())
-  return(overview)
+  if(returnPlotList == FALSE){
+    rm(list = setdiff(ls(),c("overview")))
+    invisible(gc())
+    return(overview)
+  } else {
+    rm(list = setdiff(ls(),c("overview","plots","colors","color")))
+
+    invisible(gc())
+    return(list(overview = overview, plots = plots))
+  }
 }
