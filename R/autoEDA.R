@@ -820,26 +820,34 @@ if(outcomeType %in% c("binary","multi")){
     if(names(x)[i] == y){
       plots[[length(plots) + 1]] <- percentageXY_bar(df = x, x = y, y = y, rotateLabels = rotateLabels, alpha = transparency, theme = theme) +
                                       ggtitle("Outcome distribution")
+      names(plots)[[length(plots)]] <- names(x)[i]
     }
 
     if(class(x[,i]) %in% c("character","factor") & names(x)[i] != y){
       if(plotCategorical == "bar"){
         plots[[length(plots) + 1]] <- percentageXY_bar(df = x, x = y, y = names(x)[i], rotateLabels = rotateLabels, alpha = transparency, theme = theme)
+        names(plots)[[length(plots)]] <- names(x)[i]
       } else if(plotCategorical == "groupedBar"){
         plots[[length(plots) + 1]] <- percentageXY_groupedBar(df = x, x = names(x)[i], y = y, rotateLabels = rotateLabels, alpha = transparency, theme = theme)
+        names(plots)[[length(plots)]] <- names(x)[i]
       } else if(plotCategorical == "stackedBar"){
         plots[[length(plots) + 1]] <- percentageXY_stackedBar(df = x, x = y, y = names(x)[i], rotateLabels = rotateLabels, alpha = transparency, theme = theme)
+        names(plots)[[length(plots)]] <- names(x)[i]
       }
 
     } else if(class(x[,i]) %in% c("integer","numeric") & names(x)[i] != y){
       if(plotContinuous == "boxplot"){
         plots[[length(plots) + 1]] <- boxplot_XY(df = x, x = names(x)[i], y = y, rotateLabels = rotateLabels, alpha = transparency, theme = theme)
+        names(plots)[[length(plots)]] <- names(x)[i]
       } else if(plotContinuous == "density"){
         plots[[length(plots) + 1]] <- density_XY(df = x, x = names(x)[i], y = y, alpha = transparency, theme = theme)
+        names(plots)[[length(plots)]] <- names(x)[i]
       } else if(plotContinuous == "histogram"){
         plots[[length(plots) + 1]] <- histogram_XY(df = x, x = names(x)[i], y = y, nrBins = bins, alpha = transparency, theme = theme)
+        names(plots)[[length(plots)]] <- names(x)[i]
       } else if(plotContinuous == "qqplot"){
         plots[[length(plots) + 1]] <- qqplot_groupedXY(df = x, x =  names(x)[i], y = y, alpha = transparency, theme = theme)
+        names(plots)[[length(plots)]] <- names(x)[i]
       }
     }
 
@@ -852,23 +860,30 @@ if(outcomeType == "regression"){
     if(names(x)[i] == y){
       plots[[length(plots) + 1]] <- histogram_X(df = x, x = names(x)[i], nrBins = bins, color = color, alpha = transparency, theme = theme) +
               ggtitle("Outcome distribution")
+      names(plots)[[length(plots)]] <- names(x)[i]
       plots[[length(plots) + 1]] <- qqplot_X(df = x, x = names(x)[i], color = color, alpha = transparency, theme = theme) +
               ggtitle("Outcome distribution")
+      names(plots)[[length(plots)]] <- names(x)[i]
     }
 
     if(class(x[,i]) %in% c("character","factor") & names(x)[i] != y){
       if(plotContinuous == "boxplot"){
         plots[[length(plots) + 1]] <- boxplot_XY(df = x, x = y, y = names(x)[i], rotateLabels = rotateLabels, alpha = transparency, theme = theme)
+        names(plots)[[length(plots)]] <- names(x)[i]
       } else if(plotContinuous == "qqplot"){
         plots[[length(plots) + 1]] <- qqplot_groupedXY(df = x, x =  y, y = names(x)[i], alpha = transparency, theme = theme)
+        names(plots)[[length(plots)]] <- names(x)[i]
       } else if(plotContinuous == "histogram"){
         plots[[length(plots) + 1]] <- histogram_XY(df = x, x = y, y = names(x)[i], alpha = transparency, theme = theme)
+        names(plots)[[length(plots)]] <- names(x)[i]
       } else if(plotContinuous == "density"){
         plots[[length(plots) + 1]] <- density_XY(df = x, x = y, y = names(x)[i], alpha = transparency, theme = theme)
+        names(plots)[[length(plots)]] <- names(x)[i]
       }
 
     } else if(class(x[,i]) %in% c("integer","numeric") & names(x)[i] != y){
       plots[[length(plots) + 1]] <- qqplot_XY(df = x, x = names(x)[i], y = y, alpha = transparency, theme = theme, color = color)
+      names(plots)[[length(plots)]] <- names(x)[i]
     }
 
   }
@@ -879,22 +894,25 @@ if(outcomeType == "none"){
 
     if(class(x[,i]) %in% c("character","factor")){
       plots[[length(plots) + 1]] <- percentageX_bar(df = x, x = names(x)[i], color = color, alpha = transparency, theme = theme, rotateLabels = rotateLabels)
+      names(plots)[[length(plots)]] <- names(x)[i]
 
     } else if(class(x[,i]) %in% c("integer","numeric")){
       if(plotContinuous == "boxplot"){
         plots[[length(plots) + 1]] <- boxplot_X(df = x, x = names(x)[i], color = color, alpha = transparency, theme = theme, rotateLabels = rotateLabels)
+        names(plots)[[length(plots)]] <- names(x)[i]
       } else if(plotContinuous == "density"){
         plots[[length(plots) + 1]] <- density_X(df = x, x = names(x)[i], color = color, alpha = transparency, theme = theme, rotateLabels = rotateLabels)
+        names(plots)[[length(plots)]] <- names(x)[i]
       } else if(plotContinuous == "histogram"){
         plots[[length(plots) + 1]] <- histogram_X(df = x, x = names(x)[i], nrBins = bins, color = color, alpha = transparency, theme = theme, rotateLabels = rotateLabels)
+        names(plots)[[length(plots)]] <- names(x)[i]
       } else if(plotContinuous == "qqplot"){
         plots[[length(plots) + 1]] <- qqplot_X(df = x, x = names(x)[i], color = color, alpha = transparency, theme = theme, rotateLabels = rotateLabels)
+        names(plots)[[length(plots)]] <- names(x)[i]
       }
     }
   }
 }
-
-names(plots) <- names(x)
 
 # ADD OVERVIEW PLOTS TO PLOT LIST BEFORE PLOTTING
 if(predictivePower == TRUE & is.null(y) == FALSE){
