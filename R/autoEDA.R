@@ -49,902 +49,902 @@
 #' Xander Horn
 
 autoEDA <- function(x,
-          y = NULL,
-          IDFeats = NULL,
-          sampleRate = 1,
-          outcomeType = "automatic",
-          maxUniques = 15,
-          maxLevels = 25,
-          removeConstant = TRUE,
-          removeZeroSpread = TRUE,
-          removeMajorityMissing = TRUE,
-          imputeMissing = TRUE,
-          clipOutliers = TRUE,
-          minLevelPercentage = 0.025,
-          predictivePower = TRUE,
-          outlierMethod = "tukey",
-          lowPercentile = 0.01,
-          upPercentile = 0.99,
-          plotCategorical = "stackedBar",
-          plotContinuous = "histogram",
-          bins = 20,
-          rotateLabels = FALSE,
-          colorTheme = 1,
-          theme = 2,
-          color = "#26A69A",
-          transparency = 1,
-          outputPath = NULL,
-          filename = "ExploratoryPlots",
-          returnPlotList = FALSE,
-          verbose = TRUE){
-
-# LIBRARIES
-libExists <- function(x){
-  if(!require(x,character.only = TRUE)){
-    install.packages(x,dep = TRUE)
+                    y = NULL,
+                    IDFeats = NULL,
+                    sampleRate = 1,
+                    outcomeType = "automatic",
+                    maxUniques = 15,
+                    maxLevels = 25,
+                    removeConstant = TRUE,
+                    removeZeroSpread = TRUE,
+                    removeMajorityMissing = TRUE,
+                    imputeMissing = TRUE,
+                    clipOutliers = TRUE,
+                    minLevelPercentage = 0.025,
+                    predictivePower = TRUE,
+                    outlierMethod = "tukey",
+                    lowPercentile = 0.01,
+                    upPercentile = 0.99,
+                    plotCategorical = "stackedBar",
+                    plotContinuous = "histogram",
+                    bins = 20,
+                    rotateLabels = FALSE,
+                    colorTheme = 1,
+                    theme = 2,
+                    color = "#26A69A",
+                    transparency = 1,
+                    outputPath = NULL,
+                    filename = "ExploratoryPlots",
+                    returnPlotList = FALSE,
+                    verbose = TRUE){
+  
+  # LIBRARIES
+  libExists <- function(x){
+    if(!require(x,character.only = TRUE)){
+      install.packages(x,dep = TRUE)
+    }
+    
+    if(!require(x,character.only = TRUE)){
+      stop("Package not found")
+    }
   }
-
-  if(!require(x,character.only = TRUE)){
-    stop("Package not found")
+  libExists("ggplot2")
+  libExists("RColorBrewer")
+  
+  library(RColorBrewer)
+  library(ggplot2)
+  
+  # SETTINGS
+  options(scipen = 999)
+  set.seed(1991)
+  
+  x <- as.data.frame(x)
+  
+  # ERROR HANDLING
+  if (is.null(outputPath) == FALSE){
+    PDFPath = paste(outputPath, "/", filename,".pdf", sep = "")
+    pdf(file = PDFPath)
   }
-}
-libExists("ggplot2")
-libExists("RColorBrewer")
-
-library(RColorBrewer)
-library(ggplot2)
-
-# SETTINGS
-options(scipen = 999)
-set.seed(1991)
-
-x <- as.data.frame(x)
-
-# ERROR HANDLING
-if (is.null(outputPath) == FALSE){
-  PDFPath = paste(outputPath, "/", filename,".pdf", sep = "")
-  pdf(file = PDFPath)
-}
-
-if(maxLevels < 5){
-  warning("Invalid 'maxLevels' value, defaulting")
-  maxLevels <- 25
-}
-
-if(is.null(y) == FALSE & class(y) != "character"){
-  stop("Outcome variable should be a character value of a variable name that exists in data")
-}
-
-if(is.null(y) == FALSE & length(which(y %in% names(x))) == 0){
-  stop("Outcome variable does not exist in data")
-}
-
-if(transparency < 0 | transparency > 1){
-  warning("Invalid 'transparency' value, defaulting")
-  transparency <- 1
-}
-
-if(plotCategorical %in% c("stackedBar","bar","groupedBar")){
-  err <- ""
-} else {
-  warning("Invalid 'plotCategorical' value, defaulting")
-  plotCategorical <- "stackedBar"
-}
-
-if(plotContinuous %in% c("boxplot","histogram","density","qqplot")){
-  err <- ""
-} else {
-  warning("Invalid 'plotContinuous' value, defaulting")
-  plotContinuous <- "histogram"
-}
-
-if(bins < 0){
-  warning("Invalid 'bins' value, defaulting")
-  bins <- 20
-}
-
-if(theme %in% c(1,2)){
-  err <- ""
-} else {
-  warning("Invalid 'theme' value, defaulting")
-  theme <- 2
-}
-
-if(class(color) != "character"){
-  warning("Invalid 'color' value, needs to be a character string, defaulting")
-  color <- "#26A69A"
-}
-
-if(sampleRate < 0 | sampleRate > 1){
-  warning("Invalid 'sampleRate' value, defaulting")
-  sampleRate <- 1
-}
-
-if(plotContinuous == "density" & is.null(y) == FALSE){
-  transparency <- 0.7
-}
-
-# DECLARE GLOBAL VARIABLES
-plots <- list()
-
-# DECLARE FUNCTIONS
-boxplot_XY <- function(df, x, y, rotateLabels = FALSE, alpha = 0.5, theme = 1){
-  p <- ggplot(data = df, aes(x = df[,y], y = df[,x], color = df[,y])) +
-    geom_boxplot(lwd = 1,outlier.colour = "black", outlier.shape = 16, outlier.size = 2, alpha = alpha) +
-    labs(x = y, y = x) +
-    ggtitle(paste0("Distrbiution: ",x," By ",y)) +
-    guides(fill = FALSE, colour = FALSE) +
-    scale_color_manual(values = colors) +
-    stat_summary(fun.y = mean, geom="point",colour="gray43", size=3)
-
-  if(rotateLabels == TRUE){
-    p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  
+  if(maxLevels < 5){
+    warning("Invalid 'maxLevels' value, defaulting")
+    maxLevels <- 25
   }
-
-  if(theme == 2){
-    p <- p + theme_classic()
-
+  
+  if(is.null(y) == FALSE & class(y) != "character"){
+    stop("Outcome variable should be a character value of a variable name that exists in data")
+  }
+  
+  if(is.null(y) == FALSE & length(which(y %in% names(x))) == 0){
+    stop("Outcome variable does not exist in data")
+  }
+  
+  if(transparency < 0 | transparency > 1){
+    warning("Invalid 'transparency' value, defaulting")
+    transparency <- 1
+  }
+  
+  if(plotCategorical %in% c("stackedBar","bar","groupedBar")){
+    err <- ""
+  } else {
+    warning("Invalid 'plotCategorical' value, defaulting")
+    plotCategorical <- "stackedBar"
+  }
+  
+  if(plotContinuous %in% c("boxplot","histogram","density","qqplot")){
+    err <- ""
+  } else {
+    warning("Invalid 'plotContinuous' value, defaulting")
+    plotContinuous <- "histogram"
+  }
+  
+  if(bins < 0){
+    warning("Invalid 'bins' value, defaulting")
+    bins <- 20
+  }
+  
+  if(theme %in% c(1,2)){
+    err <- ""
+  } else {
+    warning("Invalid 'theme' value, defaulting")
+    theme <- 2
+  }
+  
+  if(class(color) != "character"){
+    warning("Invalid 'color' value, needs to be a character string, defaulting")
+    color <- "#26A69A"
+  }
+  
+  if(sampleRate < 0 | sampleRate > 1){
+    warning("Invalid 'sampleRate' value, defaulting")
+    sampleRate <- 1
+  }
+  
+  if(plotContinuous == "density" & is.null(y) == FALSE){
+    transparency <- 0.7
+  }
+  
+  # DECLARE GLOBAL VARIABLES
+  plots <- list()
+  
+  # DECLARE FUNCTIONS
+  boxplot_XY <- function(df, x, y, rotateLabels = FALSE, alpha = 0.5, theme = 1){
+    p <- ggplot(data = df, aes(x = df[,y], y = df[,x], color = df[,y])) +
+      geom_boxplot(lwd = 1,outlier.colour = "black", outlier.shape = 16, outlier.size = 2, alpha = alpha) +
+      labs(x = y, y = x) +
+      ggtitle(paste0("Distrbiution: ",x," By ",y)) +
+      guides(fill = FALSE, colour = FALSE) +
+      scale_color_manual(values = colors) +
+      stat_summary(fun.y = mean, geom="point",colour="gray43", size=3)
+    
     if(rotateLabels == TRUE){
       p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
     }
+    
+    if(theme == 2){
+      p <- p + theme_classic()
+      
+      if(rotateLabels == TRUE){
+        p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+      }
+    }
+    
+    return(p)
   }
-
-  return(p)
-}
-
-density_XY <- function(df, x, y, alpha = 0.5, theme = 1){
-  p <- ggplot(data = df, aes(x = df[,x], fill = df[,y], color = df[,y])) +
-    geom_density(alpha = alpha) +
-    labs(x = x, y = "Density") +
-    ggtitle(paste0("Distrbiution: ",x," By ",y)) +
-    guides(colour=FALSE, fill = guide_legend(title=y)) +
-    scale_fill_manual(values = colors) +
-    scale_color_manual(values = colors)
-
-  if(theme == 2){
-    p <- p + theme_classic()
+  
+  density_XY <- function(df, x, y, alpha = 0.5, theme = 1){
+    p <- ggplot(data = df, aes(x = df[,x], fill = df[,y], color = df[,y])) +
+      geom_density(alpha = alpha) +
+      labs(x = x, y = "Density") +
+      ggtitle(paste0("Distrbiution: ",x," By ",y)) +
+      guides(colour=FALSE, fill = guide_legend(title=y)) +
+      scale_fill_manual(values = colors) +
+      scale_color_manual(values = colors)
+    
+    if(theme == 2){
+      p <- p + theme_classic()
+    }
+    
+    return(p)
   }
-
-  return(p)
-}
-
-histogram_XY <- function(df, x, y, alpha = 0.5, nrBins = 15, theme = 1){
-  p <- ggplot(data = df, aes(x = df[,x], fill = df[,y])) +
-    geom_histogram(bins = nrBins, alpha = alpha, color = "gray") +
-    labs(x = x, y = "Frequency") +
-    ggtitle(paste0("Distrbiution: ",x," By ",y)) +
-    guides(colour=FALSE, fill = guide_legend(title=y)) +
-    scale_fill_manual(values = colors) +
-    scale_color_manual(values = colors)
-
-  if(theme == 2){
-    p <- p + theme_classic()
+  
+  histogram_XY <- function(df, x, y, alpha = 0.5, nrBins = 15, theme = 1){
+    p <- ggplot(data = df, aes(x = df[,x], fill = df[,y])) +
+      geom_histogram(bins = nrBins, alpha = alpha, color = "gray") +
+      labs(x = x, y = "Frequency") +
+      ggtitle(paste0("Distrbiution: ",x," By ",y)) +
+      guides(colour=FALSE, fill = guide_legend(title=y)) +
+      scale_fill_manual(values = colors) +
+      scale_color_manual(values = colors)
+    
+    if(theme == 2){
+      p <- p + theme_classic()
+    }
+    
+    return(p)
   }
-
-  return(p)
-}
-
-qqplot_groupedXY <- function(df, x, y, alpha = 0.5, theme = 1){
-  p <- ggplot(data = df, aes(x = seq(1:nrow(df)), y = df[,x], color = df[,y])) +
-    geom_point(alpha = alpha) +
-    labs(x = "Observation", y = x) +
-    ggtitle(paste0("Distribution: ", x ," By ",y)) +
-    guides(colour=guide_legend(title=y), fill = FALSE) +
-    scale_color_manual(values = colors)
-
-  if(theme == 2){
-    p <- p + theme_classic()
+  
+  qqplot_groupedXY <- function(df, x, y, alpha = 0.5, theme = 1){
+    p <- ggplot(data = df, aes(x = seq(1:nrow(df)), y = df[,x], color = df[,y])) +
+      geom_point(alpha = alpha) +
+      labs(x = "Observation", y = x) +
+      ggtitle(paste0("Distribution: ", x ," By ",y)) +
+      guides(colour=guide_legend(title=y), fill = FALSE) +
+      scale_color_manual(values = colors)
+    
+    if(theme == 2){
+      p <- p + theme_classic()
+    }
+    
+    return(p)
   }
-
-  return(p)
-}
-
-qqplot_XY <- function(df,x,y,alpha = 0.5, theme = 1, color = "steelblue"){
-  p <- ggplot(data = df, aes(x = df[,x], y = df[,y])) +
-    geom_point(color = color,alpha = alpha) +
-    labs(x = x, y = y) +
-    ggtitle(paste0("Distribution: ", x ," By ",y))
-
-  if(theme == 2){
-    p <- p + theme_classic()
+  
+  qqplot_XY <- function(df,x,y,alpha = 0.5, theme = 1, color = "steelblue"){
+    p <- ggplot(data = df, aes(x = df[,x], y = df[,y])) +
+      geom_point(color = color,alpha = alpha) +
+      labs(x = x, y = y) +
+      ggtitle(paste0("Distribution: ", x ," By ",y))
+    
+    if(theme == 2){
+      p <- p + theme_classic()
+    }
+    
+    return(p)
   }
-
-  return(p)
-}
-
-percentageXY_bar <- function(df, x, y, rotateLabels = FALSE, alpha = 0.5, theme = 1){
-  p <- ggplot(data = df, aes(x = df[,x], fill = df[,y])) +
-    geom_bar(aes(y = (..count..)/sum(..count..)), alpha = alpha) +
-    scale_y_continuous(labels=scales::percent) +
-    labs(x = x, y = "Relative Frequency") +
-    ggtitle(paste0("Distrbiution: ",x," By ",y)) +
-    guides(fill=guide_legend(title=y)) +
-    scale_fill_manual(values = colors)
-
-  if(rotateLabels == TRUE){
-    p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
-  }
-
-  if(theme == 2){
-    p <- p + theme_classic()
-
+  
+  percentageXY_bar <- function(df, x, y, rotateLabels = FALSE, alpha = 0.5, theme = 1){
+    p <- ggplot(data = df, aes(x = df[,x], fill = df[,y])) +
+      geom_bar(aes(y = (..count..)/sum(..count..)), alpha = alpha) +
+      scale_y_continuous(labels=scales::percent) +
+      labs(x = x, y = "Relative Frequency") +
+      ggtitle(paste0("Distrbiution: ",x," By ",y)) +
+      guides(fill=guide_legend(title=y)) +
+      scale_fill_manual(values = colors)
+    
     if(rotateLabels == TRUE){
       p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
     }
-
+    
+    if(theme == 2){
+      p <- p + theme_classic()
+      
+      if(rotateLabels == TRUE){
+        p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+      }
+      
+    }
+    
+    return(p)
   }
-
-  return(p)
-}
-
-percentageXY_groupedBar <- function(df, x, y, rotateLabels = FALSE, alpha = 0.5, theme = 1){
-  p <- ggplot(data = df, aes(x = df[,x], fill = df[,x])) +
-    geom_bar(aes(y = (..count..)/sum(..count..)), alpha = alpha) +
-    scale_y_continuous(labels=scales::percent) +
-    labs(x = x, y = "Relative Frequency") +
-    ggtitle(paste0("Distrbiution: ",x," By ",y)) +
-    theme(legend.position="none") +
-    facet_grid(~df[,y]) +
-    scale_fill_manual(values = colors)
-
-  if(rotateLabels == TRUE){
-    p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
-  }
-
-  if(theme == 2){
-    p <- p + theme_classic() + theme(legend.position="none")
-
+  
+  percentageXY_groupedBar <- function(df, x, y, rotateLabels = FALSE, alpha = 0.5, theme = 1){
+    p <- ggplot(data = df, aes(x = df[,x], fill = df[,x])) +
+      geom_bar(aes(y = (..count..)/sum(..count..)), alpha = alpha) +
+      scale_y_continuous(labels=scales::percent) +
+      labs(x = x, y = "Relative Frequency") +
+      ggtitle(paste0("Distrbiution: ",x," By ",y)) +
+      theme(legend.position="none") +
+      facet_grid(~df[,y]) +
+      scale_fill_manual(values = colors)
+    
     if(rotateLabels == TRUE){
       p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
     }
+    
+    if(theme == 2){
+      p <- p + theme_classic() + theme(legend.position="none")
+      
+      if(rotateLabels == TRUE){
+        p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+      }
+    }
+    
+    return(p)
   }
-
-  return(p)
-}
-
-percentageXY_stackedBar <- function(df, x, y, rotateLabels = FALSE, alpha = 0.5, theme = 1){
-  p <- ggplot(data = df, aes(x = df[,x], fill = df[,y])) +
-    geom_bar(aes(y = (..count..)/sum(..count..)), position = "fill", alpha = alpha) +
-    scale_y_continuous(labels=scales::percent) +
-    labs(x = x, y = "Relative Frequency") +
-    ggtitle(paste0("Distrbiution: ",x," By ",y)) +
-    guides(fill=guide_legend(title=y)) +
-    scale_fill_manual(values = colors)
-
-  if(rotateLabels == TRUE){
-    p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
-  }
-
-  if(theme == 2){
-    p <- p + theme_classic()
-
+  
+  percentageXY_stackedBar <- function(df, x, y, rotateLabels = FALSE, alpha = 0.5, theme = 1){
+    p <- ggplot(data = df, aes(x = df[,x], fill = df[,y])) +
+      geom_bar(aes(y = (..count..)/sum(..count..)), position = "fill", alpha = alpha) +
+      scale_y_continuous(labels=scales::percent) +
+      labs(x = x, y = "Relative Frequency") +
+      ggtitle(paste0("Distrbiution: ",x," By ",y)) +
+      guides(fill=guide_legend(title=y)) +
+      scale_fill_manual(values = colors)
+    
     if(rotateLabels == TRUE){
       p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
     }
-  }
-
-  return(p)
-}
-
-percentageX_bar <- function(df,x,rotateLabels = FALSE,alpha = 0.5,color = "steelblue", theme = 1){
-  p <- ggplot(data = df, aes(x = df[,x])) +
-    geom_bar(aes(y = (..count..)/sum(..count..)), fill = color, alpha = alpha) +
-    scale_y_continuous(labels=scales::percent) +
-    labs(x = x, y = "Relative Frequency") +
-    ggtitle(paste0("Distrbiution: ",x))
-
-  if(rotateLabels == TRUE){
-    p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + guides(fill=guide_legend(title=y))
-  }
-
-  if(theme == 2){
-    p <- p + theme_classic()
-
-    if(rotateLabels == TRUE){
-      p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    
+    if(theme == 2){
+      p <- p + theme_classic()
+      
+      if(rotateLabels == TRUE){
+        p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+      }
     }
+    
+    return(p)
   }
-
-  return(p)
-}
-
-# 1.2 CONTINUOUS VARIABLES
-histogram_X <- function(df,x,color = "steelblue",nrBins = 15,alpha = 0.5, theme = 1,rotateLabels = FALSE){
-  p <- ggplot(data = df, aes(x = df[,x])) +
-    geom_histogram(bins = nrBins, alpha = alpha, fill = color, color = "gray") +
-    ggtitle(paste0("Distrbiution: ",x)) +
-    labs(x = x, y = "Frequency") +
-    theme(legend.title=element_blank())
-
-  if(rotateLabels == TRUE){
-    p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + guides(fill=guide_legend(title=y))
-  }
-
-  if(theme == 2){
-    p <- p + theme_classic()
-
+  
+  percentageX_bar <- function(df,x,rotateLabels = FALSE,alpha = 0.5,color = "steelblue", theme = 1){
+    p <- ggplot(data = df, aes(x = df[,x])) +
+      geom_bar(aes(y = (..count..)/sum(..count..)), fill = color, alpha = alpha) +
+      scale_y_continuous(labels=scales::percent) +
+      labs(x = x, y = "Relative Frequency") +
+      ggtitle(paste0("Distrbiution: ",x))
+    
     if(rotateLabels == TRUE){
-      p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+      p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + guides(fill=guide_legend(title=y))
     }
+    
+    if(theme == 2){
+      p <- p + theme_classic()
+      
+      if(rotateLabels == TRUE){
+        p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+      }
+    }
+    
+    return(p)
   }
-
-  return(p)
-}
-
-density_X <- function(df,x,color = "steelblue",alpha = 0.5, theme = 1,rotateLabels = FALSE){
-  p <- ggplot(data = df, aes(x = df[,x])) +
-    geom_density(alpha = alpha, fill = color, color = color) +
-    ggtitle(paste0("Distrbiution: ",x)) +
-    labs(x = x, y = "Density") +
-    theme(legend.title=element_blank())
-
-  if(rotateLabels == TRUE){
-    p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + guides(fill=guide_legend(title=y))
-  }
-
-  if(theme == 2){
-    p <- p + theme_classic()
-
+  
+  # 1.2 CONTINUOUS VARIABLES
+  histogram_X <- function(df,x,color = "steelblue",nrBins = 15,alpha = 0.5, theme = 1,rotateLabels = FALSE){
+    p <- ggplot(data = df, aes(x = df[,x])) +
+      geom_histogram(bins = nrBins, alpha = alpha, fill = color, color = "gray") +
+      ggtitle(paste0("Distrbiution: ",x)) +
+      labs(x = x, y = "Frequency") +
+      theme(legend.title=element_blank())
+    
     if(rotateLabels == TRUE){
-      p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+      p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + guides(fill=guide_legend(title=y))
     }
+    
+    if(theme == 2){
+      p <- p + theme_classic()
+      
+      if(rotateLabels == TRUE){
+        p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+      }
+    }
+    
+    return(p)
   }
-
-  return(p)
-}
-
-qqplot_X <- function(df, x, alpha = 0.5, theme = 1, color = "steelblue",rotateLabels = FALSE){
-  p <- ggplot(data = df, aes(x = seq(1:nrow(df)), y = df[,x])) +
-    geom_point(color = color,alpha = alpha) +
-    labs(x = "Observation", y = x) +
-    ggtitle(paste0("Distribution: ", x))
-
-  if(rotateLabels == TRUE){
-    p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + guides(fill=guide_legend(title=y))
-  }
-
-  if(theme == 2){
-    p <- p + theme_classic()
-
+  
+  density_X <- function(df,x,color = "steelblue",alpha = 0.5, theme = 1,rotateLabels = FALSE){
+    p <- ggplot(data = df, aes(x = df[,x])) +
+      geom_density(alpha = alpha, fill = color, color = color) +
+      ggtitle(paste0("Distrbiution: ",x)) +
+      labs(x = x, y = "Density") +
+      theme(legend.title=element_blank())
+    
     if(rotateLabels == TRUE){
-      p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+      p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + guides(fill=guide_legend(title=y))
     }
+    
+    if(theme == 2){
+      p <- p + theme_classic()
+      
+      if(rotateLabels == TRUE){
+        p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+      }
+    }
+    
+    return(p)
   }
-
-  return(p)
-}
-
-boxplot_X <- function(df,x,color = "steelblue",alpha = 0.5, theme = 1,rotateLabels = FALSE){
-  p <- ggplot(data = df, aes(x = factor(0), y = df[,x])) +
-    geom_boxplot(lwd = 1,outlier.colour = "black", outlier.shape = 16, outlier.size = 2, color = color, alpha = alpha) +
-    theme(axis.text.x = element_blank()) +
-    ggtitle(paste0("Distrbiution: ",x)) +
-    labs(x = "", y = x)
-
-  if(rotateLabels == TRUE){
-    p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + guides(fill=guide_legend(title=y))
-  }
-
-  if(theme == 2){
-    p <- p + theme_classic()
-
+  
+  qqplot_X <- function(df, x, alpha = 0.5, theme = 1, color = "steelblue",rotateLabels = FALSE){
+    p <- ggplot(data = df, aes(x = seq(1:nrow(df)), y = df[,x])) +
+      geom_point(color = color,alpha = alpha) +
+      labs(x = "Observation", y = x) +
+      ggtitle(paste0("Distribution: ", x))
+    
     if(rotateLabels == TRUE){
-      p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+      p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + guides(fill=guide_legend(title=y))
     }
+    
+    if(theme == 2){
+      p <- p + theme_classic()
+      
+      if(rotateLabels == TRUE){
+        p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+      }
+    }
+    
+    return(p)
   }
-
-  return(p)
-}
-
-# COLOR THEMES
-if(verbose == TRUE){
-  cat("autoEDA | Setting color theme \n")
-}
-
-tol8qualitative <- c("#332288", "#88CCEE", "#44AA99", "#117733", "#999933", "#DDCC77", "#CC6677","#AA4499")
-set8equal <- c("#66C2A5", "#8DA0CB", "#A6D854", "#B3B3B3", "#E5C494", "#E78AC3", "#FC8D62", "#FFD92F")
-redmono = c("#99000D", "#CB181D", "#EF3B2C", "#FB6A4A", "#FC9272", "#FCBBA1", "#FEE0D2")
-greenmono = c("#005A32", "#238B45", "#41AB5D", "#74C476", "#A1D99B", "#C7E9C0", "#E5F5E0")
-bluemono = c("#084594", "#2171B5", "#4292C6", "#6BAED6", "#9ECAE1", "#C6DBEF", "#DEEBF7")
-greymono = c("#000000","#252525", "#525252", "#737373", "#969696", "#BDBDBD", "#D9D9D9")
-
-theme1 <- c(brewer.pal(9,"Set1"),brewer.pal(12,"Paired"))
-theme2 <- c(brewer.pal(12,"Paired"),brewer.pal(8,"Accent"))
-theme3 <- c(brewer.pal(8,"Dark2"),set8equal,tol8qualitative)
-theme4 <- c("#4527A0","#B39DDB",bluemono,redmono,greenmono,greymono)
-
-if(colorTheme == 1){
-  colors <- theme1
-} else if(colorTheme == 2){
-  colors <- theme2
-} else if(colorTheme == 3){
-  colors <- theme3
-} else if(colorTheme == 4){
-  colors <- theme4
-} else {
-  colors <- colorTheme
-}
-
-# SAMPLE DATA
-ind <- sample(nrow(x),sampleRate*nrow(x),replace = F)
-x <- x[ind,]
-
-# REMOVE ID FEATURES
-if(is.null(IDFeats) == FALSE){
+  
+  boxplot_X <- function(df,x,color = "steelblue",alpha = 0.5, theme = 1,rotateLabels = FALSE){
+    p <- ggplot(data = df, aes(x = factor(0), y = df[,x])) +
+      geom_boxplot(lwd = 1,outlier.colour = "black", outlier.shape = 16, outlier.size = 2, color = color, alpha = alpha) +
+      theme(axis.text.x = element_blank()) +
+      ggtitle(paste0("Distrbiution: ",x)) +
+      labs(x = "", y = x)
+    
+    if(rotateLabels == TRUE){
+      p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + guides(fill=guide_legend(title=y))
+    }
+    
+    if(theme == 2){
+      p <- p + theme_classic()
+      
+      if(rotateLabels == TRUE){
+        p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+      }
+    }
+    
+    return(p)
+  }
+  
+  # COLOR THEMES
   if(verbose == TRUE){
-    cat("autoEDA | Removing ID features \n")
+    cat("autoEDA | Setting color theme \n")
   }
-  x <- x[,setdiff(names(x),IDFeats)]
-}
-
-# GET OVERVIEW OF DATA
-overview <- dataOverview(x,
-            outlierMethod = outlierMethod,
-            upPercentile = upPercentile,
-            lowPercentile = lowPercentile,
-            minLevelPercentage = minLevelPercentage)
-
-# REMOVE CONSTANT FEATURES
-if(removeConstant == TRUE){
-  if(verbose == TRUE){
-    cat("autoEDA | Removing constant features \n")
+  
+  tol8qualitative <- c("#332288", "#88CCEE", "#44AA99", "#117733", "#999933", "#DDCC77", "#CC6677","#AA4499")
+  set8equal <- c("#66C2A5", "#8DA0CB", "#A6D854", "#B3B3B3", "#E5C494", "#E78AC3", "#FC8D62", "#FFD92F")
+  redmono = c("#99000D", "#CB181D", "#EF3B2C", "#FB6A4A", "#FC9272", "#FCBBA1", "#FEE0D2")
+  greenmono = c("#005A32", "#238B45", "#41AB5D", "#74C476", "#A1D99B", "#C7E9C0", "#E5F5E0")
+  bluemono = c("#084594", "#2171B5", "#4292C6", "#6BAED6", "#9ECAE1", "#C6DBEF", "#DEEBF7")
+  greymono = c("#000000","#252525", "#525252", "#737373", "#969696", "#BDBDBD", "#D9D9D9")
+  
+  theme1 <- c(brewer.pal(9,"Set1"),brewer.pal(12,"Paired"))
+  theme2 <- c(brewer.pal(12,"Paired"),brewer.pal(8,"Accent"))
+  theme3 <- c(brewer.pal(8,"Dark2"),set8equal,tol8qualitative)
+  theme4 <- c("#4527A0","#B39DDB",bluemono,redmono,greenmono,greymono)
+  
+  if(colorTheme == 1){
+    colors <- theme1
+  } else if(colorTheme == 2){
+    colors <- theme2
+  } else if(colorTheme == 3){
+    colors <- theme3
+  } else if(colorTheme == 4){
+    colors <- theme4
+  } else {
+    colors <- colorTheme
   }
-  remove <- as.character(overview[which(overview$ConstantFeature == "Yes"),1])
-  x <- x[,setdiff(names(x),remove)]
-  if(verbose == TRUE){
-    if(length(remove) == 1){
-      cat(paste0("autoEDA | ",length(remove)," constant feature removed \n"))
-    } else {
-      cat(paste0("autoEDA | ",length(remove)," constant features removed \n"))
+  
+  # SAMPLE DATA
+  ind <- sample(nrow(x),sampleRate*nrow(x),replace = F)
+  x <- x[ind,]
+  
+  # REMOVE ID FEATURES
+  if(is.null(IDFeats) == FALSE){
+    if(verbose == TRUE){
+      cat("autoEDA | Removing ID features \n")
+    }
+    x <- x[,setdiff(names(x),IDFeats)]
+  }
+  
+  # GET OVERVIEW OF DATA
+  overview <- dataOverview(x,
+                           outlierMethod = outlierMethod,
+                           upPercentile = upPercentile,
+                           lowPercentile = lowPercentile,
+                           minLevelPercentage = minLevelPercentage)
+  
+  # REMOVE CONSTANT FEATURES
+  if(removeConstant == TRUE){
+    if(verbose == TRUE){
+      cat("autoEDA | Removing constant features \n")
+    }
+    remove <- as.character(overview[which(overview$ConstantFeature == "Yes"),1])
+    x <- x[,setdiff(names(x),remove)]
+    if(verbose == TRUE){
+      if(length(remove) == 1){
+        cat(paste0("autoEDA | ",length(remove)," constant feature removed \n"))
+      } else {
+        cat(paste0("autoEDA | ",length(remove)," constant features removed \n"))
+      }
     }
   }
-}
-
-# REMOVE ZERO SPREAD FEATURES
-if(removeZeroSpread == TRUE){
-  remove <- as.character(overview[which(overview$ZeroSpreadFeature == "Yes"),1])
+  
+  # REMOVE ZERO SPREAD FEATURES
+  if(removeZeroSpread == TRUE){
+    remove <- as.character(overview[which(overview$ZeroSpreadFeature == "Yes"),1])
+    if(is.null(y) == FALSE){
+      if(verbose == TRUE){
+        cat("autoEDA | Removing zero spread features \n")
+      }
+      remove <- setdiff(remove,y)
+    }
+    if(verbose == TRUE){
+      if(length(remove) == 1){
+        cat(paste0("autoEDA | ",length(remove)," zero spread feature removed \n"))
+      } else {
+        cat(paste0("autoEDA | ",length(remove)," zero spread features removed \n"))
+      }
+    }
+    x <- x[,setdiff(names(x),remove)]
+  }
+  
+  # REMOVE FEATURES CONTAINING MAJORITY MISSING INFORMATION
+  if(removeMajorityMissing == TRUE){
+    if(verbose == TRUE){
+      cat("autoEDA | Removing features containing majority missing values \n")
+    }
+    remove <- as.character(overview[which(overview$PercentageMissing > 50),1])
+    if(verbose == TRUE){
+      if(length(remove) == 1){
+        cat(paste0("autoEDA | ",length(remove)," majority missing feature removed \n"))
+      } else {
+        cat(paste0("autoEDA | ",length(remove)," majority missing features removed \n"))
+      }
+    }
+    x <- x[,setdiff(names(x),remove)]
+  }
+  
+  # IF FEATURES WERE REMOVED SUBSET OVERVIEW AND ORDER FRAME
+  overview <- subset(overview,overview$Feature %in% names(x))
+  x <- x[,names(x)]
+  
+  # FORMAT FEATURES
+  if(is.null(y) == TRUE){
+    
+    for(i in 1:ncol(x)){
+      if(class(x[,i]) %in% c("integer","numeric") & length(unique(x[,i])) > maxUniques){
+        x[,i] <- as.numeric(x[,i])
+      } else if(class(x[,i]) %in% c("integer","numeric") & length(unique(x[,i])) <= maxUniques){
+        x[,i] <- as.character(x[,i])
+      } else {
+        x[,i] <- toupper(as.character(x[,i]))
+      }
+    }
+    
+  } else {
+    
+    for(i in 1:ncol(x)){
+      if(class(x[,i]) %in% c("integer","numeric") & length(unique(x[,i])) > maxUniques & names(x)[i] != y){
+        x[,i] <- as.numeric(x[,i])
+      } else if(class(x[,i]) %in% c("integer","numeric") & length(unique(x[,i])) <= maxUniques & names(x)[i] != y){
+        x[,i] <- as.character(x[,i])
+      } else if(class(x[,i]) %in% c("factor","character") & names(x)[i] != y){
+        x[,i] <- toupper(as.character(x[,i]))
+      }
+    }
+    
+  }
+  
+  # GET OVERVIEW OF DATA
+  overview <- dataOverview(x,
+                           outlierMethod = outlierMethod,
+                           upPercentile = upPercentile,
+                           lowPercentile = lowPercentile,
+                           minLevelPercentage = minLevelPercentage)
+  
+  # CLEAN DATA ACCORDING TO OVERVIEW
+  if(verbose == TRUE){
+    cat("autoEDA | Cleaning data \n")
+  }
+  
+  if(is.null(y) == TRUE){
+    for(i in 1:ncol(x)){
+      
+      if(clipOutliers == TRUE & class(x[,i]) == "numeric"){
+        x[,i] <- ifelse(x[,i] < overview[i,"LowerOutlierValue"], as.numeric(overview[i,"ImputationValue"]), x[,i])
+        x[,i] <- ifelse(x[,i] > overview[i,"UpperOutlierValue"], as.numeric(overview[i,"ImputationValue"]), x[,i])
+      }
+      
+      if(imputeMissing == TRUE){
+        if(class(x[,i]) == "numeric"){
+          x[,i] <- ifelse(is.na(x[,i]) == TRUE, as.numeric(overview[i,"ImputationValue"]), x[,i])
+        } else {
+          x[,i] <- ifelse(is.na(x[,i]) == TRUE, overview[i,"ImputationValue"], x[,i])
+        }
+      }
+    }
+  } else {
+    for(i in 1:ncol(x)){
+      
+      if(clipOutliers == TRUE & class(x[,i]) == "numeric" & names(x)[i] != y){
+        x[,i] <- ifelse(x[,i] < overview[i,"LowerOutlierValue"], as.numeric(overview[i,"ImputationValue"]), x[,i])
+        x[,i] <- ifelse(x[,i] > overview[i,"UpperOutlierValue"], as.numeric(overview[i,"ImputationValue"]), x[,i])
+      }
+      
+      if(imputeMissing == TRUE){
+        if(class(x[,i]) == "numeric"){
+          x[,i] <- ifelse(is.na(x[,i]) == TRUE, as.numeric(overview[i,"ImputationValue"]), x[,i])
+        } else {
+          x[,i] <- ifelse(is.na(x[,i]) == TRUE, overview[i,"ImputationValue"], x[,i])
+        }
+      }
+    }
+  }
+  
+  # FORMAT FEATURES
+  if(is.null(y) == TRUE){
+    
+    for(i in 1:ncol(x)){
+      if(class(x[,i]) %in% c("integer","numeric") & length(unique(x[,i])) > maxUniques){
+        x[,i] <- as.numeric(x[,i])
+      } else if(class(x[,i]) %in% c("integer","numeric") & length(unique(x[,i])) <= maxUniques){
+        x[,i] <- as.factor(as.character(x[,i]))
+        levels <- as.character(sort(as.numeric(levels(factor(x[,i])))))
+        x[,i] <- factor(x[,i], levels = levels)
+      } else {
+        x[,i] <- as.factor(as.character(x[,i]))
+        levels <- as.character(sort(levels(factor(x[,i]))))
+        x[,i] <- factor(x[,i], levels = levels)
+      }
+    }
+    
+  } else {
+    
+    for(i in 1:ncol(x)){
+      if(class(x[,i]) %in% c("integer","numeric") & length(unique(x[,i])) > maxUniques & names(x)[i] != y){
+        x[,i] <- as.numeric(x[,i])
+      } else if(class(x[,i]) %in% c("integer","numeric") & length(unique(x[,i])) <= maxUniques & names(x)[i] != y){
+        x[,i] <- as.factor(as.character(x[,i]))
+        levels <- as.character(sort(as.numeric(levels(factor(x[,i])))))
+        x[,i] <- factor(x[,i], levels = levels)
+      } else if(class(x[,i]) %in% c("factor","character") & names(x)[i] != y){
+        x[,i] <- as.factor(as.character(x[,i]))
+        levels <- as.character(sort(levels(factor(x[,i]))))
+        x[,i] <- factor(x[,i], levels = levels)
+      }
+    }
+  }
+  
+  # SPARSE LEVELS OF CATEGORICAL FEATURES
+  if(minLevelPercentage > 0 & is.null(y) == TRUE){
+    if(verbose == TRUE){
+      cat("autoEDA | Correcting sparse categorical feature levels \n")
+    }
+    
+    for(i in 1:ncol(x)){
+      if(class(x[,i]) %in% c("factor","character")){
+        
+        x[,i] <- as.character(x[,i])
+        props <- as.data.frame(prop.table(table(x[,i])))
+        levels <- as.character(props[which(props$Freq < minLevelPercentage),1])
+        cumsumLevels <- sum(props[which(props$Freq < minLevelPercentage),2])
+        
+        if(cumsumLevels < minLevelPercentage){
+          x[,i] <- ifelse(x[,i] %in% levels, overview[i,"Mode"], x[,i])
+          x[,i] <- as.factor(as.character(x[,i]))
+          levels <- as.character(sort(levels(factor(x[,i]))))
+          x[,i] <- factor(x[,i], levels = levels)
+        } else {
+          x[,i] <- ifelse(x[,i] %in% levels, "ALL_OTHER", x[,i])
+          x[,i] <- as.factor(as.character(x[,i]))
+          levels <- as.character(sort(levels(factor(x[,i]))))
+          x[,i] <- factor(x[,i], levels = levels)
+        }
+      }
+    }
+  } else if(minLevelPercentage > 0 & is.null(y) == FALSE){
+    if(verbose == TRUE){
+      cat("autoEDA | Correcting sparse categorical feature levels \n")
+    }
+    
+    for(i in 1:ncol(x)){
+      if(class(x[,i]) %in% c("factor","character") & names(x)[i] != y){
+        
+        x[,i] <- as.character(x[,i])
+        props <- as.data.frame(prop.table(table(x[,i])))
+        levels <- as.character(props[which(props$Freq < minLevelPercentage),1])
+        cumsumLevels <- sum(props[which(props$Freq < minLevelPercentage),2])
+        
+        if(cumsumLevels < minLevelPercentage){
+          x[,i] <- ifelse(x[,i] %in% levels, overview[i,"Mode"], x[,i])
+          x[,i] <- as.factor(as.character(x[,i]))
+          levels <- as.character(sort(levels(factor(x[,i]))))
+          x[,i] <- factor(x[,i], levels = levels)
+        } else {
+          x[,i] <- ifelse(x[,i] %in% levels, "ALL_OTHER", x[,i])
+          x[,i] <- as.factor(as.character(x[,i]))
+          levels <- as.character(sort(levels(factor(x[,i]))))
+          x[,i] <- factor(x[,i], levels = levels)
+        }
+      }
+    }
+  }
+  
+  # COMBINING CATEGORICAL LEVELS CAN CAUSE CONSTANT FEATURES
+  if(removeConstant == TRUE){
+    temp <- data.frame(Feature = names(x),
+                       Unique = sapply(x, function(x) length(unique(x))))
+    remove <- as.character(temp[which(temp$Unique == 1),1])
+    if(length(remove) > 0){
+      overview <- subset(overview,overview$Feature %in% names(x))
+      x <- x[,names(x)]
+    }
+  }
+  
+  # REMOVE CATEGORICAL FEATURES ABOVE maxLevels VALUE
+  if(is.null(y) == FALSE){
+    temp <- data.frame(Feature = names(x),
+                       Class = sapply(x,class),
+                       Unique = sapply(x, function(x) length(unique(x))))
+    temp <- subset(temp,temp$Feature != y)
+    temp <- subset(temp,temp$Class %in% c("character","factor"))
+    remove <- as.character(temp[which(temp$Unique > maxLevels),1])
+    if(length(remove) > 0){
+      overview <- subset(overview,overview$Feature %in% names(x))
+      x <- x[,names(x)]
+    }
+  } else {
+    temp <- data.frame(Feature = names(x),
+                       Class = sapply(x,class),
+                       Unique = sapply(x, function(x) length(unique(x))))
+    temp <- subset(temp,temp$Class %in% c("character","factor"))
+    remove <- as.character(temp[which(temp$Unique > maxLevels),1])
+    if(length(remove) > 0){
+      overview <- subset(overview,overview$Feature %in% names(x))
+      x <- x[,names(x)]
+    }
+  }
+  
+  # RE-ORDER THAT OUTCOME IS FIRST
   if(is.null(y) == FALSE){
     if(verbose == TRUE){
-      cat("autoEDA | Removing zero spread features \n")
+      cat("autoEDA | Sorting features \n")
     }
-    remove <- setdiff(remove,y)
-  }
-  if(verbose == TRUE){
-    if(length(remove) == 1){
-      cat(paste0("autoEDA | ",length(remove)," zero spread feature removed \n"))
-    } else {
-      cat(paste0("autoEDA | ",length(remove)," zero spread features removed \n"))
-    }
-  }
-  x <- x[,setdiff(names(x),remove)]
-}
-
-# REMOVE FEATURES CONTAINING MAJORITY MISSING INFORMATION
-if(removeMajorityMissing == TRUE){
-  if(verbose == TRUE){
-    cat("autoEDA | Removing features containing majority missing values \n")
-  }
-  remove <- as.character(overview[which(overview$PercentageMissing > 50),1])
-  if(verbose == TRUE){
-    if(length(remove) == 1){
-      cat(paste0("autoEDA | ",length(remove)," majority missing feature removed \n"))
-    } else {
-      cat(paste0("autoEDA | ",length(remove)," majority missing features removed \n"))
-    }
-  }
-  x <- x[,setdiff(names(x),remove)]
-}
-
-# IF FEATURES WERE REMOVED SUBSET OVERVIEW AND ORDER FRAME
-overview <- subset(overview,overview$Feature %in% names(x))
-x <- x[,names(x)]
-
-# FORMAT FEATURES
-if(is.null(y) == TRUE){
-
-  for(i in 1:ncol(x)){
-    if(class(x[,i]) %in% c("integer","numeric") & length(unique(x[,i])) > maxUniques){
-      x[,i] <- as.numeric(x[,i])
-    } else if(class(x[,i]) %in% c("integer","numeric") & length(unique(x[,i])) <= maxUniques){
-      x[,i] <- as.character(x[,i])
-    } else {
-      x[,i] <- toupper(as.character(x[,i]))
-    }
-  }
-
-} else {
-
-  for(i in 1:ncol(x)){
-    if(class(x[,i]) %in% c("integer","numeric") & length(unique(x[,i])) > maxUniques & names(x)[i] != y){
-      x[,i] <- as.numeric(x[,i])
-    } else if(class(x[,i]) %in% c("integer","numeric") & length(unique(x[,i])) <= maxUniques & names(x)[i] != y){
-      x[,i] <- as.character(x[,i])
-    } else if(class(x[,i]) %in% c("factor","character") & names(x)[i] != y){
-      x[,i] <- toupper(as.character(x[,i]))
-    }
-  }
-
-}
-
-# GET OVERVIEW OF DATA
-overview <- dataOverview(x,
-            outlierMethod = outlierMethod,
-            upPercentile = upPercentile,
-            lowPercentile = lowPercentile,
-            minLevelPercentage = minLevelPercentage)
-
-# CLEAN DATA ACCORDING TO OVERVIEW
-if(verbose == TRUE){
-  cat("autoEDA | Cleaning data \n")
-}
-
-if(is.null(y) == TRUE){
-  for(i in 1:ncol(x)){
-
-    if(clipOutliers == TRUE & class(x[,i]) == "numeric"){
-      x[,i] <- ifelse(x[,i] < overview[i,"LowerOutlierValue"], as.numeric(overview[i,"ImputationValue"]), x[,i])
-      x[,i] <- ifelse(x[,i] > overview[i,"UpperOutlierValue"], as.numeric(overview[i,"ImputationValue"]), x[,i])
-    }
-
-    if(imputeMissing == TRUE){
-      if(class(x[,i]) == "numeric"){
-        x[,i] <- ifelse(is.na(x[,i]) == TRUE, as.numeric(overview[i,"ImputationValue"]), x[,i])
-      } else {
-        x[,i] <- ifelse(is.na(x[,i]) == TRUE, overview[i,"ImputationValue"], x[,i])
-      }
-    }
-  }
-} else {
-  for(i in 1:ncol(x)){
-
-    if(clipOutliers == TRUE & class(x[,i]) == "numeric" & names(x)[i] != y){
-      x[,i] <- ifelse(x[,i] < overview[i,"LowerOutlierValue"], as.numeric(overview[i,"ImputationValue"]), x[,i])
-          x[,i] <- ifelse(x[,i] > overview[i,"UpperOutlierValue"], as.numeric(overview[i,"ImputationValue"]), x[,i])
-    }
-
-    if(imputeMissing == TRUE){
-      if(class(x[,i]) == "numeric"){
-        x[,i] <- ifelse(is.na(x[,i]) == TRUE, as.numeric(overview[i,"ImputationValue"]), x[,i])
-      } else {
-        x[,i] <- ifelse(is.na(x[,i]) == TRUE, overview[i,"ImputationValue"], x[,i])
-      }
-    }
-  }
-}
-
-# FORMAT FEATURES
-if(is.null(y) == TRUE){
-
-  for(i in 1:ncol(x)){
-    if(class(x[,i]) %in% c("integer","numeric") & length(unique(x[,i])) > maxUniques){
-      x[,i] <- as.numeric(x[,i])
-    } else if(class(x[,i]) %in% c("integer","numeric") & length(unique(x[,i])) <= maxUniques){
-      x[,i] <- as.factor(as.character(x[,i]))
-        levels <- as.character(sort(as.numeric(levels(factor(x[,i])))))
-        x[,i] <- factor(x[,i], levels = levels)
-    } else {
-      x[,i] <- as.factor(as.character(x[,i]))
-        levels <- as.character(sort(levels(factor(x[,i]))))
-        x[,i] <- factor(x[,i], levels = levels)
-    }
-  }
-
-} else {
-
-  for(i in 1:ncol(x)){
-    if(class(x[,i]) %in% c("integer","numeric") & length(unique(x[,i])) > maxUniques & names(x)[i] != y){
-      x[,i] <- as.numeric(x[,i])
-    } else if(class(x[,i]) %in% c("integer","numeric") & length(unique(x[,i])) <= maxUniques & names(x)[i] != y){
-      x[,i] <- as.factor(as.character(x[,i]))
-        levels <- as.character(sort(as.numeric(levels(factor(x[,i])))))
-        x[,i] <- factor(x[,i], levels = levels)
-    } else if(class(x[,i]) %in% c("factor","character") & names(x)[i] != y){
-      x[,i] <- as.factor(as.character(x[,i]))
-        levels <- as.character(sort(levels(factor(x[,i]))))
-        x[,i] <- factor(x[,i], levels = levels)
-    }
-  }
-}
-
-# SPARSE LEVELS OF CATEGORICAL FEATURES
-if(minLevelPercentage > 0 & is.null(y) == TRUE){
-  if(verbose == TRUE){
-    cat("autoEDA | Correcting sparse categorical feature levels \n")
-  }
-
-  for(i in 1:ncol(x)){
-    if(class(x[,i]) %in% c("factor","character")){
-
-      x[,i] <- as.character(x[,i])
-      props <- as.data.frame(prop.table(table(x[,i])))
-      levels <- as.character(props[which(props$Freq < minLevelPercentage),1])
-      cumsumLevels <- sum(props[which(props$Freq < minLevelPercentage),2])
-
-        if(cumsumLevels < minLevelPercentage){
-          x[,i] <- ifelse(x[,i] %in% levels, overview[i,"Mode"], x[,i])
-          x[,i] <- as.factor(as.character(x[,i]))
-          levels <- as.character(sort(levels(factor(x[,i]))))
-          x[,i] <- factor(x[,i], levels = levels)
-        } else {
-          x[,i] <- ifelse(x[,i] %in% levels, "ALL_OTHER", x[,i])
-          x[,i] <- as.factor(as.character(x[,i]))
-          levels <- as.character(sort(levels(factor(x[,i]))))
-          x[,i] <- factor(x[,i], levels = levels)
-        }
-    }
-  }
-} else if(minLevelPercentage > 0 & is.null(y) == FALSE){
-  if(verbose == TRUE){
-    cat("autoEDA | Correcting sparse categorical feature levels \n")
-  }
-
-  for(i in 1:ncol(x)){
-    if(class(x[,i]) %in% c("factor","character") & names(x)[i] != y){
-
-      x[,i] <- as.character(x[,i])
-      props <- as.data.frame(prop.table(table(x[,i])))
-      levels <- as.character(props[which(props$Freq < minLevelPercentage),1])
-      cumsumLevels <- sum(props[which(props$Freq < minLevelPercentage),2])
-
-        if(cumsumLevels < minLevelPercentage){
-          x[,i] <- ifelse(x[,i] %in% levels, overview[i,"Mode"], x[,i])
-          x[,i] <- as.factor(as.character(x[,i]))
-          levels <- as.character(sort(levels(factor(x[,i]))))
-          x[,i] <- factor(x[,i], levels = levels)
-        } else {
-          x[,i] <- ifelse(x[,i] %in% levels, "ALL_OTHER", x[,i])
-          x[,i] <- as.factor(as.character(x[,i]))
-          levels <- as.character(sort(levels(factor(x[,i]))))
-          x[,i] <- factor(x[,i], levels = levels)
-        }
-    }
-  }
-}
-
-# COMBINING CATEGORICAL LEVELS CAN CAUSE CONSTANT FEATURES
-if(removeConstant == TRUE){
-  temp <- data.frame(Feature = names(x),
-                     Unique = sapply(x, function(x) length(unique(x))))
-  remove <- as.character(temp[which(temp$Unique == 1),1])
-  if(length(remove) > 0){
-    overview <- subset(overview,overview$Feature %in% names(x))
-    x <- x[,names(x)]
-  }
-}
-
-# REMOVE CATEGORICAL FEATURES ABOVE maxLevels VALUE
-if(is.null(y) == FALSE){
-  temp <- data.frame(Feature = names(x),
-                     Class = sapply(x,class),
-                     Unique = sapply(x, function(x) length(unique(x))))
-  temp <- subset(temp,temp$Feature != y)
-  temp <- subset(temp,temp$Class %in% c("character","factor"))
-  remove <- as.character(temp[which(temp$Unique > maxLevels),1])
-  if(length(remove) > 0){
-    overview <- subset(overview,overview$Feature %in% names(x))
-    x <- x[,names(x)]
-  }
-} else {
-  temp <- data.frame(Feature = names(x),
-                     Class = sapply(x,class),
-                     Unique = sapply(x, function(x) length(unique(x))))
-  temp <- subset(temp,temp$Class %in% c("character","factor"))
-  remove <- as.character(temp[which(temp$Unique > maxLevels),1])
-  if(length(remove) > 0){
-    overview <- subset(overview,overview$Feature %in% names(x))
-    x <- x[,names(x)]
-  }
-}
-
-# RE-ORDER THAT OUTCOME IS FIRST
-if(is.null(y) == FALSE){
-  if(verbose == TRUE){
-    cat("autoEDA | Sorting features \n")
-  }
-
+    
     feats <- setdiff(names(x),y)
     feats <- c(y,feats)
     x <- x[,feats]
-}
-
-# DETERMINE OUTCOME TYPE IF Y IS GIVEN
-if(outcomeType == "automatic"){
-  if(is.null(y) == FALSE){
-    if(length(unique(x[,y])) == 2){
-      outcomeType <- "binary"
-      x[,y] <- as.factor(x[,y])
-      if(verbose == TRUE){
-        cat("autoEDA | Binary classification outcome detected \n")
+  }
+  
+  # DETERMINE OUTCOME TYPE IF Y IS GIVEN
+  if(outcomeType == "automatic"){
+    if(is.null(y) == FALSE){
+      if(length(unique(x[,y])) == 2){
+        outcomeType <- "binary"
+        x[,y] <- as.factor(x[,y])
+        if(verbose == TRUE){
+          cat("autoEDA | Binary classification outcome detected \n")
+        }
+        
+      } else if(length(unique(x[,y])) > 2 & length(unique(x[,y])) <= 15){
+        outcomeType <- "multi"
+        x[,y] <- as.factor(x[,y])
+        if(verbose == TRUE){
+          cat("autoEDA | Multi-class classification outcome detected \n")
+        }
+        
+      } else {
+        outcomeType <- "regression"
+        x[,y] <- as.numeric(x[,y])
+        if(verbose == TRUE){
+          cat("autoEDA | Regression outcome detected \n")
+        }
+        
       }
-
-    } else if(length(unique(x[,y])) > 2 & length(unique(x[,y])) <= 15){
-      outcomeType <- "multi"
-      x[,y] <- as.factor(x[,y])
-      if(verbose == TRUE){
-        cat("autoEDA | Multi-class classification outcome detected \n")
-      }
-
     } else {
-      outcomeType <- "regression"
-      x[,y] <- as.numeric(x[,y])
+      outcomeType <- "none"
       if(verbose == TRUE){
-        cat("autoEDA | Regression outcome detected \n")
+        cat("autoEDA | Performing univariate analysis \n")
       }
-
+      
     }
   } else {
-    outcomeType <- "none"
+    outcomeType <- outcomeType
+  }
+  
+  if(color == "#26A69A" & outcomeType != "none"){
+    color <- colors[1]
+  }
+  
+  #CALCULATE PREDICTIVE POWER OF FEATURES
+  options(warn = -1)
+  if(predictivePower == TRUE & is.null(y) == FALSE){
     if(verbose == TRUE){
-      cat("autoEDA | Performing univariate analysis \n")
+      cat("autoEDA | Calculating feature predictive power \n")
     }
-
+    pp <- predictivePower(x = x,
+                          y = y,
+                          outcomeType = outcomeType)
+    
+    overview <- merge(x = overview,
+                      y = pp,
+                      by.x = "Feature",
+                      all.x = TRUE)
+    overview$PredictivePower <- ifelse(is.na(overview$PredictivePower) == TRUE, "Low", overview$PredictivePower)
+    overview$PredictivePower <- factor(overview$PredictivePower, levels = c("Low","Medium","High"))
+    
+    pp_plot <- percentageXY_bar(df = overview, x = "PredictivePower", y = "PredictivePower", rotateLabels = rotateLabels, alpha = transparency, theme = theme) +
+      ggtitle("Predictive power of features")
   }
-} else {
-  outcomeType <- outcomeType
-}
-
-if(color == "#26A69A" & outcomeType != "none"){
-  color <- colors[1]
-}
-
-#CALCULATE PREDICTIVE POWER OF FEATURES
-options(warn = -1)
-if(predictivePower == TRUE & is.null(y) == FALSE){
+  options(warn = 0)
+  
+  # VISUALIZE DATA
   if(verbose == TRUE){
-    cat("autoEDA | Calculating feature predictive power \n")
+    cat("autoEDA | Visualizing data \n")
   }
-  pp <- predictivePower(x = x,
-                        y = y,
-                        outcomeType = outcomeType)
-
-  overview <- merge(x = overview,
-                    y = pp,
-                    by.x = "Feature",
-                    all.x = TRUE)
-  overview$PredictivePower <- ifelse(is.na(overview$PredictivePower) == TRUE, "Low", overview$PredictivePower)
-  overview$PredictivePower <- factor(overview$PredictivePower, levels = c("Low","Medium","High"))
-
-  pp_plot <- percentageXY_bar(df = overview, x = "PredictivePower", y = "PredictivePower", rotateLabels = rotateLabels, alpha = transparency, theme = theme) +
-              ggtitle("Predictive power of features")
-}
-options(warn = 0)
-
-# VISUALIZE DATA
-if(verbose == TRUE){
-  cat("autoEDA | Visualizing data \n")
-}
-
-if(outcomeType %in% c("binary","multi")){
-  for(i in 1:ncol(x)){
-
-    if(names(x)[i] == y){
-      plots[[length(plots) + 1]] <- percentageXY_bar(df = x, x = y, y = y, rotateLabels = rotateLabels, alpha = transparency, theme = theme) +
-                                      ggtitle("Outcome distribution")
-      names(plots)[[length(plots)]] <- names(x)[i]
-    }
-
-    if(class(x[,i]) %in% c("character","factor") & names(x)[i] != y){
-      if(plotCategorical == "bar"){
-        plots[[length(plots) + 1]] <- percentageXY_bar(df = x, x = y, y = names(x)[i], rotateLabels = rotateLabels, alpha = transparency, theme = theme)
-        names(plots)[[length(plots)]] <- names(x)[i]
-      } else if(plotCategorical == "groupedBar"){
-        plots[[length(plots) + 1]] <- percentageXY_groupedBar(df = x, x = names(x)[i], y = y, rotateLabels = rotateLabels, alpha = transparency, theme = theme)
-        names(plots)[[length(plots)]] <- names(x)[i]
-      } else if(plotCategorical == "stackedBar"){
-        plots[[length(plots) + 1]] <- percentageXY_stackedBar(df = x, x = y, y = names(x)[i], rotateLabels = rotateLabels, alpha = transparency, theme = theme)
+  
+  if(outcomeType %in% c("binary","multi")){
+    for(i in 1:ncol(x)){
+      
+      if(names(x)[i] == y){
+        plots[[length(plots) + 1]] <- percentageXY_bar(df = x, x = y, y = y, rotateLabels = rotateLabels, alpha = transparency, theme = theme) +
+          ggtitle("Outcome distribution")
         names(plots)[[length(plots)]] <- names(x)[i]
       }
-
-    } else if(class(x[,i]) %in% c("integer","numeric") & names(x)[i] != y){
-      if(plotContinuous == "boxplot"){
-        plots[[length(plots) + 1]] <- boxplot_XY(df = x, x = names(x)[i], y = y, rotateLabels = rotateLabels, alpha = transparency, theme = theme)
+      
+      if(class(x[,i]) %in% c("character","factor") & names(x)[i] != y){
+        if(plotCategorical == "bar"){
+          plots[[length(plots) + 1]] <- percentageXY_bar(df = x, x = y, y = names(x)[i], rotateLabels = rotateLabels, alpha = transparency, theme = theme)
+          names(plots)[[length(plots)]] <- names(x)[i]
+        } else if(plotCategorical == "groupedBar"){
+          plots[[length(plots) + 1]] <- percentageXY_groupedBar(df = x, x = names(x)[i], y = y, rotateLabels = rotateLabels, alpha = transparency, theme = theme)
+          names(plots)[[length(plots)]] <- names(x)[i]
+        } else if(plotCategorical == "stackedBar"){
+          plots[[length(plots) + 1]] <- percentageXY_stackedBar(df = x, x = y, y = names(x)[i], rotateLabels = rotateLabels, alpha = transparency, theme = theme)
+          names(plots)[[length(plots)]] <- names(x)[i]
+        }
+        
+      } else if(class(x[,i]) %in% c("integer","numeric") & names(x)[i] != y){
+        if(plotContinuous == "boxplot"){
+          plots[[length(plots) + 1]] <- boxplot_XY(df = x, x = names(x)[i], y = y, rotateLabels = rotateLabels, alpha = transparency, theme = theme)
+          names(plots)[[length(plots)]] <- names(x)[i]
+        } else if(plotContinuous == "density"){
+          plots[[length(plots) + 1]] <- density_XY(df = x, x = names(x)[i], y = y, alpha = transparency, theme = theme)
+          names(plots)[[length(plots)]] <- names(x)[i]
+        } else if(plotContinuous == "histogram"){
+          plots[[length(plots) + 1]] <- histogram_XY(df = x, x = names(x)[i], y = y, nrBins = bins, alpha = transparency, theme = theme)
+          names(plots)[[length(plots)]] <- names(x)[i]
+        } else if(plotContinuous == "qqplot"){
+          plots[[length(plots) + 1]] <- qqplot_groupedXY(df = x, x =  names(x)[i], y = y, alpha = transparency, theme = theme)
+          names(plots)[[length(plots)]] <- names(x)[i]
+        }
+      }
+      
+    }
+  }
+  
+  if(outcomeType == "regression"){
+    for(i in 1:ncol(x)){
+      
+      if(names(x)[i] == y){
+        plots[[length(plots) + 1]] <- histogram_X(df = x, x = names(x)[i], nrBins = bins, color = color, alpha = transparency, theme = theme) +
+          ggtitle("Outcome distribution")
         names(plots)[[length(plots)]] <- names(x)[i]
-      } else if(plotContinuous == "density"){
-        plots[[length(plots) + 1]] <- density_XY(df = x, x = names(x)[i], y = y, alpha = transparency, theme = theme)
-        names(plots)[[length(plots)]] <- names(x)[i]
-      } else if(plotContinuous == "histogram"){
-        plots[[length(plots) + 1]] <- histogram_XY(df = x, x = names(x)[i], y = y, nrBins = bins, alpha = transparency, theme = theme)
-        names(plots)[[length(plots)]] <- names(x)[i]
-      } else if(plotContinuous == "qqplot"){
-        plots[[length(plots) + 1]] <- qqplot_groupedXY(df = x, x =  names(x)[i], y = y, alpha = transparency, theme = theme)
+        plots[[length(plots) + 1]] <- qqplot_X(df = x, x = names(x)[i], color = color, alpha = transparency, theme = theme) +
+          ggtitle("Outcome distribution")
         names(plots)[[length(plots)]] <- names(x)[i]
       }
-    }
-
-  }
-}
-
-if(outcomeType == "regression"){
-  for(i in 1:ncol(x)){
-
-    if(names(x)[i] == y){
-      plots[[length(plots) + 1]] <- histogram_X(df = x, x = names(x)[i], nrBins = bins, color = color, alpha = transparency, theme = theme) +
-              ggtitle("Outcome distribution")
-      names(plots)[[length(plots)]] <- names(x)[i]
-      plots[[length(plots) + 1]] <- qqplot_X(df = x, x = names(x)[i], color = color, alpha = transparency, theme = theme) +
-              ggtitle("Outcome distribution")
-      names(plots)[[length(plots)]] <- names(x)[i]
-    }
-
-    if(class(x[,i]) %in% c("character","factor") & names(x)[i] != y){
-      if(plotContinuous == "boxplot"){
-        plots[[length(plots) + 1]] <- boxplot_XY(df = x, x = y, y = names(x)[i], rotateLabels = rotateLabels, alpha = transparency, theme = theme)
-        names(plots)[[length(plots)]] <- names(x)[i]
-      } else if(plotContinuous == "qqplot"){
-        plots[[length(plots) + 1]] <- qqplot_groupedXY(df = x, x =  y, y = names(x)[i], alpha = transparency, theme = theme)
-        names(plots)[[length(plots)]] <- names(x)[i]
-      } else if(plotContinuous == "histogram"){
-        plots[[length(plots) + 1]] <- histogram_XY(df = x, x = y, y = names(x)[i], alpha = transparency, theme = theme)
-        names(plots)[[length(plots)]] <- names(x)[i]
-      } else if(plotContinuous == "density"){
-        plots[[length(plots) + 1]] <- density_XY(df = x, x = y, y = names(x)[i], alpha = transparency, theme = theme)
+      
+      if(class(x[,i]) %in% c("character","factor") & names(x)[i] != y){
+        if(plotContinuous == "boxplot"){
+          plots[[length(plots) + 1]] <- boxplot_XY(df = x, x = y, y = names(x)[i], rotateLabels = rotateLabels, alpha = transparency, theme = theme)
+          names(plots)[[length(plots)]] <- names(x)[i]
+        } else if(plotContinuous == "qqplot"){
+          plots[[length(plots) + 1]] <- qqplot_groupedXY(df = x, x =  y, y = names(x)[i], alpha = transparency, theme = theme)
+          names(plots)[[length(plots)]] <- names(x)[i]
+        } else if(plotContinuous == "histogram"){
+          plots[[length(plots) + 1]] <- histogram_XY(df = x, x = y, y = names(x)[i], alpha = transparency, theme = theme)
+          names(plots)[[length(plots)]] <- names(x)[i]
+        } else if(plotContinuous == "density"){
+          plots[[length(plots) + 1]] <- density_XY(df = x, x = y, y = names(x)[i], alpha = transparency, theme = theme)
+          names(plots)[[length(plots)]] <- names(x)[i]
+        }
+        
+      } else if(class(x[,i]) %in% c("integer","numeric") & names(x)[i] != y){
+        plots[[length(plots) + 1]] <- qqplot_XY(df = x, x = names(x)[i], y = y, alpha = transparency, theme = theme, color = color)
         names(plots)[[length(plots)]] <- names(x)[i]
       }
-
-    } else if(class(x[,i]) %in% c("integer","numeric") & names(x)[i] != y){
-      plots[[length(plots) + 1]] <- qqplot_XY(df = x, x = names(x)[i], y = y, alpha = transparency, theme = theme, color = color)
-      names(plots)[[length(plots)]] <- names(x)[i]
+      
     }
-
   }
-}
-
-if(outcomeType == "none"){
-  for(i in 1:ncol(x)){
-
-    if(class(x[,i]) %in% c("character","factor")){
-      plots[[length(plots) + 1]] <- percentageX_bar(df = x, x = names(x)[i], color = color, alpha = transparency, theme = theme, rotateLabels = rotateLabels)
-      names(plots)[[length(plots)]] <- names(x)[i]
-
-    } else if(class(x[,i]) %in% c("integer","numeric")){
-      if(plotContinuous == "boxplot"){
-        plots[[length(plots) + 1]] <- boxplot_X(df = x, x = names(x)[i], color = color, alpha = transparency, theme = theme, rotateLabels = rotateLabels)
+  
+  if(outcomeType == "none"){
+    for(i in 1:ncol(x)){
+      
+      if(class(x[,i]) %in% c("character","factor")){
+        plots[[length(plots) + 1]] <- percentageX_bar(df = x, x = names(x)[i], color = color, alpha = transparency, theme = theme, rotateLabels = rotateLabels)
         names(plots)[[length(plots)]] <- names(x)[i]
-      } else if(plotContinuous == "density"){
-        plots[[length(plots) + 1]] <- density_X(df = x, x = names(x)[i], color = color, alpha = transparency, theme = theme, rotateLabels = rotateLabels)
-        names(plots)[[length(plots)]] <- names(x)[i]
-      } else if(plotContinuous == "histogram"){
-        plots[[length(plots) + 1]] <- histogram_X(df = x, x = names(x)[i], nrBins = bins, color = color, alpha = transparency, theme = theme, rotateLabels = rotateLabels)
-        names(plots)[[length(plots)]] <- names(x)[i]
-      } else if(plotContinuous == "qqplot"){
-        plots[[length(plots) + 1]] <- qqplot_X(df = x, x = names(x)[i], color = color, alpha = transparency, theme = theme, rotateLabels = rotateLabels)
-        names(plots)[[length(plots)]] <- names(x)[i]
+        
+      } else if(class(x[,i]) %in% c("integer","numeric")){
+        if(plotContinuous == "boxplot"){
+          plots[[length(plots) + 1]] <- boxplot_X(df = x, x = names(x)[i], color = color, alpha = transparency, theme = theme, rotateLabels = rotateLabels)
+          names(plots)[[length(plots)]] <- names(x)[i]
+        } else if(plotContinuous == "density"){
+          plots[[length(plots) + 1]] <- density_X(df = x, x = names(x)[i], color = color, alpha = transparency, theme = theme, rotateLabels = rotateLabels)
+          names(plots)[[length(plots)]] <- names(x)[i]
+        } else if(plotContinuous == "histogram"){
+          plots[[length(plots) + 1]] <- histogram_X(df = x, x = names(x)[i], nrBins = bins, color = color, alpha = transparency, theme = theme, rotateLabels = rotateLabels)
+          names(plots)[[length(plots)]] <- names(x)[i]
+        } else if(plotContinuous == "qqplot"){
+          plots[[length(plots) + 1]] <- qqplot_X(df = x, x = names(x)[i], color = color, alpha = transparency, theme = theme, rotateLabels = rotateLabels)
+          names(plots)[[length(plots)]] <- names(x)[i]
+        }
       }
     }
   }
-}
-
-# ADD OVERVIEW PLOTS TO PLOT LIST BEFORE PLOTTING
-if(predictivePower == TRUE & is.null(y) == FALSE){
-  plots[[length(plots) + 1]] <- pp_plot
-  names(plots)[[length(plots)]] <- "PredictivePower"
-}
-
-if(returnPlotList == FALSE){
-  invisible(lapply(plots,function(x) plot(x,main="some plot")))
-}
-
-for(i in 1:ncol(overview)){
-  if(class(overview[,i]) %in% c("integer","numeric")){
-    overview[,i] <- ifelse(is.na(overview[,i]) == TRUE,0,overview[,i])
+  
+  # ADD OVERVIEW PLOTS TO PLOT LIST BEFORE PLOTTING
+  if(predictivePower == TRUE & is.null(y) == FALSE){
+    plots[[length(plots) + 1]] <- pp_plot
+    names(plots)[[length(plots)]] <- "PredictivePower"
   }
-}
-
-if (is.null(outputPath) == FALSE){
-  dev.off()
-  if(verbose == TRUE){
-    cat(paste0("autoEDA | Output generated to ",outputPath," \n"))
-    cat(paste0("autoEDA | Output contained in file name ",filename,".pdf \n"))
+  
+  if(returnPlotList == FALSE){
+    invisible(lapply(plots,function(x) plot(x,main="some plot")))
   }
-}
-
+  
+  for(i in 1:ncol(overview)){
+    if(class(overview[,i]) %in% c("integer","numeric")){
+      overview[,i] <- ifelse(is.na(overview[,i]) == TRUE,0,overview[,i])
+    }
+  }
+  
+  if (is.null(outputPath) == FALSE){
+    dev.off()
+    if(verbose == TRUE){
+      cat(paste0("autoEDA | Output generated to ",outputPath," \n"))
+      cat(paste0("autoEDA | Output contained in file name ",filename,".pdf \n"))
+    }
+  }
+  
   if(returnPlotList == FALSE){
     rm(list = setdiff(ls(),c("overview")))
     invisible(gc())
     return(overview)
   } else {
     rm(list = setdiff(ls(),c("overview","plots","colors","color")))
-
+    
     invisible(gc())
     return(list(overview = overview, plots = plots))
   }
