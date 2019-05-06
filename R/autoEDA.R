@@ -172,7 +172,7 @@ autoEDA <- function(x,
     p <- ggplot(data = df, aes(x = df[,y], y = df[,x], color = df[,y])) +
       geom_boxplot(lwd = 1,outlier.colour = "black", outlier.shape = 16, outlier.size = 2, alpha = alpha) +
       labs(x = y, y = x) +
-      ggtitle(paste0("Distrbiution: ",x," By ",y)) +
+      ggtitle(paste0("Distribution: ",x," By ",y)) +
       guides(fill = FALSE, colour = FALSE) +
       scale_color_manual(values = colors) +
       stat_summary(fun.y = mean, geom="point",colour="gray43", size=3)
@@ -196,7 +196,7 @@ autoEDA <- function(x,
     p <- ggplot(data = df, aes(x = df[,x], fill = df[,y], color = df[,y])) +
       geom_density(alpha = alpha) +
       labs(x = x, y = "Density") +
-      ggtitle(paste0("Distrbiution: ",x," By ",y)) +
+      ggtitle(paste0("Distribution: ",x," By ",y)) +
       guides(colour=FALSE, fill = guide_legend(title=y)) +
       scale_fill_manual(values = colors) +
       scale_color_manual(values = colors)
@@ -212,7 +212,7 @@ autoEDA <- function(x,
     p <- ggplot(data = df, aes(x = df[,x], fill = df[,y])) +
       geom_histogram(bins = nrBins, alpha = alpha, color = "gray") +
       labs(x = x, y = "Frequency") +
-      ggtitle(paste0("Distrbiution: ",x," By ",y)) +
+      ggtitle(paste0("Distribution: ",x," By ",y)) +
       guides(colour=FALSE, fill = guide_legend(title=y)) +
       scale_fill_manual(values = colors) +
       scale_color_manual(values = colors)
@@ -257,7 +257,7 @@ autoEDA <- function(x,
       geom_bar(aes(y = (..count..)/sum(..count..)), alpha = alpha) +
       scale_y_continuous(labels=scales::percent) +
       labs(x = x, y = "Relative Frequency") +
-      ggtitle(paste0("Distrbiution: ",x," By ",y)) +
+      ggtitle(paste0("Distribution: ",x," By ",y)) +
       guides(fill=guide_legend(title=y)) +
       scale_fill_manual(values = colors)
     
@@ -282,7 +282,7 @@ autoEDA <- function(x,
       geom_bar(aes(y = (..count..)/sum(..count..)), alpha = alpha) +
       scale_y_continuous(labels=scales::percent) +
       labs(x = x, y = "Relative Frequency") +
-      ggtitle(paste0("Distrbiution: ",x," By ",y)) +
+      ggtitle(paste0("Distribution: ",x," By ",y)) +
       theme(legend.position="none") +
       facet_grid(~df[,y]) +
       scale_fill_manual(values = colors)
@@ -307,7 +307,7 @@ autoEDA <- function(x,
       geom_bar(aes(y = (..count..)/sum(..count..)), position = "fill", alpha = alpha) +
       scale_y_continuous(labels=scales::percent) +
       labs(x = x, y = "Relative Frequency") +
-      ggtitle(paste0("Distrbiution: ",x," By ",y)) +
+      ggtitle(paste0("Distribution: ",x," By ",y)) +
       guides(fill=guide_legend(title=y)) +
       scale_fill_manual(values = colors)
     
@@ -331,7 +331,7 @@ autoEDA <- function(x,
       geom_bar(aes(y = (..count..)/sum(..count..)), fill = color, alpha = alpha) +
       scale_y_continuous(labels=scales::percent) +
       labs(x = x, y = "Relative Frequency") +
-      ggtitle(paste0("Distrbiution: ",x))
+      ggtitle(paste0("Distribution: ",x))
     
     if(rotateLabels == TRUE){
       p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + guides(fill=guide_legend(title=y))
@@ -352,7 +352,7 @@ autoEDA <- function(x,
   histogram_X <- function(df,x,color = "steelblue",nrBins = 15,alpha = 0.5, theme = 1,rotateLabels = FALSE){
     p <- ggplot(data = df, aes(x = df[,x])) +
       geom_histogram(bins = nrBins, alpha = alpha, fill = color, color = "gray") +
-      ggtitle(paste0("Distrbiution: ",x)) +
+      ggtitle(paste0("Distribution: ",x)) +
       labs(x = x, y = "Frequency") +
       theme(legend.title=element_blank())
     
@@ -374,7 +374,7 @@ autoEDA <- function(x,
   density_X <- function(df,x,color = "steelblue",alpha = 0.5, theme = 1,rotateLabels = FALSE){
     p <- ggplot(data = df, aes(x = df[,x])) +
       geom_density(alpha = alpha, fill = color, color = color) +
-      ggtitle(paste0("Distrbiution: ",x)) +
+      ggtitle(paste0("Distribution: ",x)) +
       labs(x = x, y = "Density") +
       theme(legend.title=element_blank())
     
@@ -418,7 +418,7 @@ autoEDA <- function(x,
     p <- ggplot(data = df, aes(x = factor(0), y = df[,x])) +
       geom_boxplot(lwd = 1,outlier.colour = "black", outlier.shape = 16, outlier.size = 2, color = color, alpha = alpha) +
       theme(axis.text.x = element_blank()) +
-      ggtitle(paste0("Distrbiution: ",x)) +
+      ggtitle(paste0("Distribution: ",x)) +
       labs(x = "", y = x)
     
     if(rotateLabels == TRUE){
