@@ -71,6 +71,8 @@ autoEDA(x, y = NULL, IDFeats = NULL, sampleRate = 1,
 \item{filename}{[character | Optional] The filename of the PDF file that will consists of the plots should the output path be specified. Defaults to ExploratoryPlots.}
 
 \item{verbose}{[logical | Optional] Should the function be chatty and provide feedback or not. Defaults to TRUE.}
+                          
+\item{returnPlotList}{[logical | Optional] Should the function return the plots in a list form instead of plotting.}
 }
 \value{
 Object of type data.frame containing exploratory information and if specified predictive power per feature. Output is the same as the output generated from dataOverview.
