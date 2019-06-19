@@ -13,7 +13,7 @@ autoEDA(x, y = NULL, IDFeats = NULL, sampleRate = 1,
   plotCategorical = "stackedBar", plotContinuous = "histogram", bins = 20,
   rotateLabels = FALSE, colorTheme = 1, theme = 2, color = "#26A69A",
   transparency = 1, outputPath = NULL, filename = "ExploratoryPlots",
-  verbose = TRUE)
+  verbose = TRUE, returnPlotList = FALSE)
 }
 \arguments{
 \item{x}{[data.frame | Required]   Dataset which should contain the outcome feature. If x is not a data.frame object it will be converted to one.}
